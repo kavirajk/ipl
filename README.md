@@ -26,3 +26,7 @@ bash-4.3$ ipl 2001:4860:4860::8888
 2001:4860:4860::8888 United-States
 
 ```
+## LICENSE
+MIT License
+
+Copyright (c) 2019 Kaviraj
