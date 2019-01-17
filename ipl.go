@@ -2,14 +2,11 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 
 	"github.com/kavirajk/ipl/ip"
-)
-
-const (
-	api = "https://api.ip2country.info/ip?"
 )
 
 var (
@@ -17,6 +14,11 @@ var (
 )
 
 func main() {
+	var verbose bool
+
+	flag.BoolVar(&verbose, "v", false, "print verbose information")
+	flag.Parse()
+
 	iplist := os.Args[1:]
 
 	if len(iplist) == 0 {
@@ -28,14 +30,16 @@ func main() {
 	res := make([]ip.Info, 0, len(iplist))
 
 	for _, ipadr := range iplist {
-		r, err := ip.Lookup(api, ipadr)
-		if err != nil || r.Country.Name == "" {
+		r, err := ip.Lookup(ip.API, ipadr)
+		if err != nil || r.Status != "success" {
 			r.Err = errFailed
 			r.IP = ipadr
 		}
 		res = append(res, r)
 	}
-	fmt.Println(ip.Records(res))
+	for _, i := range res {
+		fmt.Println(ip.Format(i, verbose))
+	}
 
 }
 
