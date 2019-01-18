@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
@@ -19,30 +20,34 @@ func main() {
 	flag.BoolVar(&verbose, "v", false, "print verbose information")
 	flag.Parse()
 
-	iplist := os.Args[1:]
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Split(bufio.ScanWords)
 
-	if len(iplist) == 0 {
-		fmt.Println(help())
-		os.Exit(1)
+	iplist := make([]string, 0)
+
+	for scanner.Scan() {
+		iplist = append(iplist, scanner.Text())
 	}
 
-	// sorry, API doesn't support bulk ips
-	res := make([]ip.Info, 0, len(iplist))
+	var (
+		infoChan = make(chan ip.Info)
+	)
 
-	for _, ipadr := range iplist {
-		r, err := ip.Lookup(ip.API, ipadr)
-		if err != nil || r.Status != "success" {
-			r.Err = errFailed
-			r.IP = ipadr
-		}
-		res = append(res, r)
+	// Scatter
+	for i := 0; i < len(iplist); i++ {
+		ipadr := iplist[i]
+		go func(ipadr string) {
+			// sorry, API doesn't support bulk ips
+			r, err := ip.Lookup(ip.API, ipadr)
+			if err != nil || r.Status != "success" {
+				r.Err = errFailed
+			}
+			infoChan <- r
+		}(ipadr)
 	}
-	for _, i := range res {
-		fmt.Println(ip.Format(i, verbose))
+
+	// Gatter
+	for i := 0; i < len(iplist); i++ {
+		fmt.Println(ip.Format(<-infoChan, verbose))
 	}
-
-}
-
-func help() string {
-	return fmt.Sprintf("Usage: ipl [IP-ADDRESS]...\nLook up IP-ADDRESSES.")
 }

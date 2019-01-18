@@ -40,12 +40,7 @@ type Info struct {
 }
 
 func Format(i Info, verbose bool) string {
-	ip := fmt.Sprintf("%-15s", i.IP)
-
-	if strings.Contains(i.IP, ":") {
-		// ipv6
-		ip = fmt.Sprintf("%-39s", i.IP)
-	}
+	ip := fmt.Sprintf("%-39s", i.IP) // max upto ipv6
 
 	if i.Err != nil {
 		return fmt.Sprintf("%s %v", ip, i.Err)
